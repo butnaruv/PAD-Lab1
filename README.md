@@ -16,7 +16,7 @@
   * Delete event.
 
 ## 3. System design diagram
-![](image.png)
+![](systemDesign.png)
 
 ## 4. Technology stack
 
