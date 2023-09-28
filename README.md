@@ -2,6 +2,11 @@
 
 ## 1. Application suitability
  The event planning system is suitable for a microservices architecture because it involves various components, such as user management, event creation, guest invitations, task management, and more, which can be developed and maintained independently. As mentioned, distributed systems allow to scale specific components of the application independently. For example, during a popular event, it’s possible to scale the invitation management service to handle a large number of guest responses without affecting other parts of the application. This ensures that the application remains responsive even during peak usage
+
+### Real world examples
+* **WeddingWire:** WeddingWire is an event planning application specifically tailored for weddings. It provides tools for couples to plan their weddings, including finding vendors, managing guest lists, and creating wedding websites.
+* **Meetup:** Meetup is a social platform that facilitates event planning and attendance. Users can create and join local interest-based groups and events. It's commonly used for organizing networking events, hobbyist meetups, and community gatherings.
+
  ## 2. Service boundaries
 * **User authentication service:**
   * Sign up (create user)
