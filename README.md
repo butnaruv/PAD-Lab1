@@ -100,6 +100,7 @@ Response (Unsuccessful): HTTP status code 404
 Endpoint: POST /api/tasks
 Request Payload: {
    "taskId" : "integer",
+   "eventId" : "integer",
    "taskName": "string",
    "taskDescription": "string",
    "deadline": "string",
@@ -116,6 +117,7 @@ Request Parameters: {
    "taskId": "integer"
 }
 Request Payload: {
+   "eventId" : "integer",
    "taskName": "string",
    "taskDescription": "string",
    "deadline": "string",
