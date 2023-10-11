@@ -8,17 +8,19 @@
 * **Meetup:** Meetup is a social platform that facilitates event planning and attendance. Users can create and join local interest-based groups and events. It's commonly used for organizing networking events, hobbyist meetups, and community gatherings.
 
  ## 2. Service boundaries
-* **User authentication service:**
-  * Sign up (create user)
-  * Login (authenticate user) 
-  * Change password
-  * See user profile
 * **Event management service:** 
   * Create event
   * Update event details
-  * Add participants
-  * Remove participants
+  * Read event by Id
+  * Read all events
   * Delete event.
+
+* **Task management service:**
+  * Create task
+  * Update task
+  * Read task by Id
+  * Read all tasks
+  * Delete task
 
 ## 3. System design diagram
 ![](systemDesign.png)
@@ -32,68 +34,19 @@
 **Java for API gateway:** Java is a favorable choice for implementing an API gateway due to its maturity (well-established, reliable, and proven over time), scalability, rich ecosystem, and strong security features. Its cross-platform compatibility, community support, and integration capabilities make it a reliable and customizable solution for managing, securing, and routing API requests in a microservices architecture.
 
 ## 5. Data management
-  ### I. User authentication service
 
-* Sign Up (Create User):
-```
-Endpoint: POST /api/login
-Request Payload: {
-   "username": "string (The user's username)",
-   "password": "string (The user's password)"
-}
-Response (Successful): HTTP status code 200
-Response (Unsuccessful): HTTP status code 401
-```
-* Login (Authenticate User): 
-```
-Endpoint: POST /api/changepassword
-Request Payload: {
-   "userId": "string or integer (Unique identifier for the user)",
-   "currentPassword": "string (The user's current password)",
-   "newPassword": "string (The user's new password)"
-}
-Response (Successful): HTTP status code 200
-Response (Unsuccessful): HTTP status code 400
-```
-
-* Change Password:
-```
-Endpoint: POST /api/changepassword
-Request Payload: {
-   "userId": "string or integer (Unique identifier for the user)",
-   "currentPassword": "string (The user's current password)",
-   "newPassword": "string (The user's new password)"
-}
-Response (Successful): HTTP status code 200
-Response (Unsuccessful): HTTP status code 400
-```
-
-* See user Profile:
-```
-Endpoint: POST /api/changepassword
-Request Payload: {
-   "userId": "string or integer (Unique identifier for the user)",
-   "currentPassword": "string (The user's current password)",
-   "newPassword": "string (The user's new password)"
-}
-Response (Successful): HTTP status code 200
-Response (Unsuccessful): HTTP status code 400
-```
-
-   ### II.	 Creation and managing events service:
+   ### I.	 Creation and managing events service:
 * Create Event:
 ```
 Endpoint: POST /api/events
 Request Payload: {
+   "eventId" : "integer",
    "eventName": "string",
-   "eventDescription": "string",
-   "eventDetails": {
-      "date": "string or date/time format",
-      "location": "string",
-      "dressCode": "string"
-   }
+   "date" : "string",
+   "location" : "string"
+   "dessCode" : "string"
 }
-Response (Successful): HTTP status code 201
+Response (Successful): HTTP status code 201 
 Response (Unsuccessful): HTTP status code 400
 ```
 
@@ -101,54 +54,105 @@ Response (Unsuccessful): HTTP status code 400
 ```
 Endpoint: PUT /api/events/{eventId}
 Request Parameters: {
-   "eventId": "string or integer (Unique identifier for the event being updated)"
+   "eventId": "integer"
 }
 Request Payload: {
-   "eventName": "string (Updated event name, optional)",
-   "eventDescription": "string (Updated event description, optional)",
-   "eventDetails": {
-      "date": "string or date/time format (Updated event date and time, optional)",
-      "location": "string (Updated event location, optional)",
-      "dressCode": "string (Updated dress code, optional)"
-   }
+   "eventName": "string",
+   "date" : "string",
+   "location" : "string"
+   "dessCode" : "string"
 }
-Response (Successful): HTTP status code 200
+Response (Successful): HTTP status code 200 with a JSON response containing event details.
 Response (Unsuccessful): HTTP status code 404 or 400
 ```
 
-* Add Participants:
+* Read event by Id:
 ```
-Endpoint: POST /api/events/{eventId}/participants
+Endpoint: GET /api/events/{eventId}
 Request Parameters: {
-   "eventId": "string or integer (Unique identifier for the event)"
+   "eventId": "integer"
 }
-Request Payload: {
-   "participantId": "string or integer (Unique identifier for the user to be added as a participant)"
-}
-Response (Successful): HTTP status code 201
-Response (Unsuccessful): HTTP status code 404 or 400
+Response (Event Found): HTTP status code 200 with a JSON response containing event details.
+Response (Event Not Found): HTTP status code 404
 
 ```
 
-* Remove Participants:
+* Read all events:
 ```
-Endpoint: DELETE /api/events/{eventId}/participants/{participantId}
-Request Parameters: {
-   "eventId": "string or integer (Unique identifier for the event)",
-   "participantId": "string or integer (Unique identifier for the user to be removed as a participant)"
-}
-Response (Successful): HTTP status code 204
-Response (Unsuccessful): HTTP status code 404 or 400
+Endpoint: GET /api/events
+Response: HTTP status code 200 with a JSON response containing a list of events, each represented as an object with details such as event name, description, date, location, and dress code.
+
 
 ```
 * Delete Event:
 ```
 Endpoint: DELETE /api/events/{eventId}
 Request Parameters: {
-   "eventId": "string or integer (Unique identifier for the event to be deleted)"
+   "eventId": "integer"
 }
 Response (Successful): HTTP status code 204
 Response (Unsuccessful): HTTP status code 404
+```
+### II. Creation and managing tasks service
+
+* Create task: 
+```
+Endpoint: POST /api/tasks
+Request Payload: {
+   "taskId" : "integer",
+   "taskName": "string",
+   "taskDescription": "string",
+   "deadline": "string",
+   "status": "string ('done' / 'to do')"
+}
+Response (Successful): HTTP status code 201 
+Response (Unsuccessful): HTTP status code 400
+
+```
+* Update task : 
+```
+Endpoint: PUT /api/tasks/{taskId}
+Request Parameters: {
+   "taskId": "integer"
+}
+Request Payload: {
+   "taskName": "string",
+   "taskDescription": "string",
+   "deadline": "string",
+   "status": "string ('done' / 'to do')"
+}
+Response (Successful): HTTP status code 200 with a JSON response containing task details.
+Response (Unsuccessful): HTTP status code 404 or 400
+
+```
+
+* Read task by Id:
+```
+Endpoint: GET /api/tasks/{taskId}
+Request Parameters: {
+   "taskId": "integer"
+}
+Response (Task Found): HTTP status code 200 with a JSON response containing task details.
+Response (Task Not Found): HTTP status code 404
+
+```
+
+* Read all tasks:
+```
+Endpoint: GET /api/tasks
+Response: HTTP status code 200 with a JSON response containing a list of tasks.
+```
+
+* Delete task:
+
+```
+Endpoint: DELETE /api/tasks/{taskId}
+Request Parameters: {
+   "taskId": "integer"
+}
+Response (Successful): HTTP status code 204
+Response (Unsuccessful): HTTP status code 404
+
 ```
 
 ## 6. Deployment and scaling
