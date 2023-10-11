@@ -1,0 +1,48 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "EventManagementService.Protos";
+
+service EventManagerService {
+  rpc GetEventListAsync (Empty) returns (Events);
+  rpc GetEventByIdAsync (GetByEventId) returns (EventDetails);
+  rpc CreateEventAsync (CreateNewEvent) returns (EventDetails);
+  rpc UpdateEventAsync (UpdateEvent) returns (EventDetails);
+  rpc DeleteEventAsync (DeleteEventRequest) returns (DeleteEventResponse);
+}
+
+message Empty {
+
+}
+
+message GetByEventId {
+  int32 id = 1;
+}
+
+message EventDetails {
+    int32 id = 1;
+    string name = 2;
+    string date = 3;
+    string location = 4;
+    string dressCode = 5;
+}
+
+message Events {
+    repeated EventDetails items = 1;
+}
+
+message CreateNewEvent {
+    EventDetails event = 1;
+}
+
+message UpdateEvent {
+    EventDetails event = 1;
+}
+
+message DeleteEventRequest {
+    int32 id = 1;
+}
+
+message DeleteEventResponse {
+    bool isDeleted = 1;
+}
+
