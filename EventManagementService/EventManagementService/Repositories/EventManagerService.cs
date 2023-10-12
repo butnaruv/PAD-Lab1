@@ -1,5 +1,6 @@
 ﻿using EventManagementService.Data;
 using EventManagementService.Entities;
+using Microsoft.EntityFrameworkCore;
 using System;
 
 namespace EventManagementService.Repositories
@@ -23,7 +24,7 @@ namespace EventManagementService.Repositories
             return await _dbContext.Event.Where(x => x.Id == Id).FirstOrDefaultAsync();
         }
 
-        public async Task<Event> AddEventAsync(Event offer)
+        public async Task<Event> CreateEventAsync(Event offer)
         {
             var result = _dbContext.Event.Add(offer);
             await _dbContext.SaveChangesAsync();
