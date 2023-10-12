@@ -19,7 +19,7 @@
   * Create task
   * Update task
   * Read task by Id
-  * Read all tasks
+  * Read all tasks assigned to an event
   * Delete task
 
 ## 3. System design diagram
@@ -139,10 +139,14 @@ Response (Task Not Found): HTTP status code 404
 
 ```
 
-* Read all tasks:
+* Read all tasks assigned to an event:
 ```
 Endpoint: GET /api/tasks
-Response: HTTP status code 200 with a JSON response containing a list of tasks.
+Request Parameters: {
+   "eventId": "integer"
+}
+Response(eventId Found): HTTP status code 200 with a JSON response containing a list of tasks.
+Response (eventId Not Found): HTTP status code 404
 ```
 
 * Delete task:
