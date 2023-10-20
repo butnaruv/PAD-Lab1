@@ -24,16 +24,16 @@ namespace EventManagementService.Repositories
             return await _dbContext.Event.Where(x => x.Id == Id).FirstOrDefaultAsync();
         }
 
-        public async Task<Event> CreateEventAsync(Event offer)
+        public async Task<Event> CreateEventAsync(Event dbEvent)
         {
-            var result = _dbContext.Event.Add(offer);
+            var result = _dbContext.Event.Add(dbEvent);
             await _dbContext.SaveChangesAsync();
             return result.Entity;
         }
 
-        public async Task<Event> UpdateEventAsync(Event offer)
+        public async Task<Event> UpdateEventAsync(Event dbEvent)
         {
-            var result = _dbContext.Event.Update(offer);
+            var result = _dbContext.Event.Update(dbEvent);
             await _dbContext.SaveChangesAsync();
             return result.Entity;
         }
