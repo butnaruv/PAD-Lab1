@@ -97,3 +97,34 @@ artifacts/
 project.lock.json
 project.fragment.lock.json
 artifacts/
+
+# Python-related files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.log
+
+# Virtual environment
+venv/
+.env
+
+# IDE and editor-specific files (customize based on your IDE/editor)
+.vscode/
+.idea/
+
+# Compiled Python files
+*.pyc
+
+# Compiled Python files
+__pycache__/
+
+# Mac OS and Linux system files
+.DS_Store
+Thumbs.db
+
+# Flask-related files (e.g., app.db, migrations/)
+instance/
+migrations/
+
