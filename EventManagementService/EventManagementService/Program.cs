@@ -1,5 +1,8 @@
-using EventManagementService.Services;
-using Grpc.Net.Client;
+using EventManagementService.Data;
+using EventManagementService.Repositories;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,11 +11,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddGrpc();
+builder.Services.AddScoped<IEventRepository, EventRepository>();
+builder.Services.AddDbContext<DbContextClass>();
+IServiceCollection serviceCollection = builder.Services.AddAutoMapper(typeof(Program).Assembly);
+//builder.Services.AddGrpcHealthChecks()
+//                .AddCheck("Sample", () => HealthCheckResult.Healthy());
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-app.MapGrpcService<CommunicationService>();
+app.MapGrpcService<EventManagementService.Services.EventService>();
+//app.MapGrpcHealthChecksService();
 app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
 app.Run();

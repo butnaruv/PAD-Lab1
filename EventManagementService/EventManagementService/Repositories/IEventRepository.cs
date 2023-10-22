@@ -1,9 +1,8 @@
 ﻿using EventManagementService.Entities;
-using System;
 
 namespace EventManagementService.Repositories
 {
-    public interface IEventManagerService
+    public interface IEventRepository
     {
         public Task<List<Event>> GetEventListAsync();
         public Task<Event> GetEventByIdAsync(int Id);

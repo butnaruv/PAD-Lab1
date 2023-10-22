@@ -3,17 +3,16 @@ using EventManagementService.Entities;
 using EventManagementService.Protos;
 using EventManagementService.Repositories;
 using Grpc.Core;
-using System;
 using EventManagerService = EventManagementService.Protos.EventManagerService;
 
 namespace EventManagementService.Services
 {
-    public class EventManagementService : EventManagerService.EventManagerServiceBase
+    public class EventService : EventManagerService.EventManagerServiceBase
     {
-        private readonly IEventManagerService _eventManagerService;
+        private readonly IEventRepository _eventManagerService;
         private readonly IMapper _mapper;
 
-        public EventManagementService(IEventManagerService eventManagerService, IMapper mapper)
+        public EventService(IEventRepository eventManagerService, IMapper mapper)
         {
             _eventManagerService = eventManagerService;
             _mapper = mapper;
@@ -42,21 +41,43 @@ namespace EventManagementService.Services
 
         public async override Task<EventDetails> CreateEventAsync(CreateNewEvent request, ServerCallContext context)
         {
+            Console.WriteLine("entered the create event async from management service");
             var offer = _mapper.Map<Event>(request.Event);
 
             await _eventManagerService.CreateEventAsync(offer);
 
             var eventDetails = _mapper.Map<EventDetails>(offer);
+            Console.WriteLine(eventDetails);
+            Task.FromResult(eventDetails);
             return eventDetails;
         }
 
         public async override Task<EventDetails> UpdateEventAsync(UpdateEvent request, ServerCallContext context)
         {
+            Console.WriteLine("Event is updated...");
+            var existingEvent = await _eventManagerService.GetEventByIdAsync(request.Event.Id);
+            Console.WriteLine(request.Event.DressCode);
+            if (request.Event.DressCode != "")
+            {
+                existingEvent.DressCode = request.Event.DressCode;
+            }
+            if (request.Event.Name != "")
+            {
+                existingEvent.Name = request.Event.Name;
+            }
+            if (request.Event.Date != "")
+            {
+                existingEvent.Date = request.Event.Date;
+            }
+            if (request.Event.Location != "")
+            {
+                existingEvent.Location = request.Event.Location;
+            }
             var dbEvent = _mapper.Map<Event>(request.Event);
 
-            await _eventManagerService.UpdateEventAsync(dbEvent);
+            await _eventManagerService.UpdateEventAsync(existingEvent);
 
-            var eventDetails = _mapper.Map<EventDetails>(dbEvent);
+            var eventDetails = _mapper.Map<EventDetails>(existingEvent);
             return eventDetails;
         }
 

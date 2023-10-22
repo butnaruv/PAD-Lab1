@@ -1,15 +1,14 @@
 ﻿using EventManagementService.Data;
 using EventManagementService.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
 
 namespace EventManagementService.Repositories
 {
-    public class EventManagerService: IEventManagerService
+    public class EventRepository : IEventRepository
     {
         private readonly DbContextClass _dbContext;
 
-        public EventManagerService(DbContextClass dbContext)
+        public EventRepository(DbContextClass dbContext)
         {
             _dbContext = dbContext;
         }
@@ -26,8 +25,16 @@ namespace EventManagementService.Repositories
 
         public async Task<Event> CreateEventAsync(Event dbEvent)
         {
+            Console.WriteLine("entered the create event async from manager service");
             var result = _dbContext.Event.Add(dbEvent);
-            await _dbContext.SaveChangesAsync();
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+
+            }
             return result.Entity;
         }
 

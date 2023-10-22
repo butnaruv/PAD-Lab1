@@ -1,6 +1,5 @@
 ﻿using EventManagementService.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
 
 namespace EventManagementService.Data
 {

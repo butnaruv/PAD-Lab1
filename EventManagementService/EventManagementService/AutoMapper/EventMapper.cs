@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using EventManagementService.Entities;
 using EventManagementService.Protos;
-using System;
 
 namespace EventManagementService.AutoMapper
 {
