@@ -1,0 +1,15 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "EventManagementService";
+
+service CheckHealth {
+  rpc CheckHealth (HealthRequest) returns (HealthResponse);
+}
+
+message HealthRequest {
+
+}
+
+message HealthResponse {
+  string healthMeassage = 1;
+}
