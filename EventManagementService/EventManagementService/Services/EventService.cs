@@ -21,74 +21,157 @@ namespace EventManagementService.Services
 
         public async override Task<Events> GetEventListAsync(Empty request, ServerCallContext context)
         {
-            var eventsData = await _eventManagerService.GetEventListAsync();
-
-            Events response = new Events();
-            foreach (Event dbEvent in eventsData)
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            try
             {
-                response.Items.Add(_mapper.Map<EventDetails>(dbEvent));
+                //await Task.Delay(6000);
+                Console.WriteLine("GET ALL EVENTS was called");
+                var eventsDataTask = _eventManagerService.GetEventListAsync();
+                await Task.WhenAny(eventsDataTask, Task.Delay(Timeout.Infinite, cts.Token));
+                if (eventsDataTask.IsCompletedSuccessfully)
+                {
+                    var eventsData = eventsDataTask.Result;
+                    Events response = new Events();
+                    foreach (Event dbEvent in eventsData)
+                    {
+                        response.Items.Add(_mapper.Map<EventDetails>(dbEvent));
+                    }
+                    Console.WriteLine("Success!");
+                    return response;
+                }
+                else
+                {
+                    Console.WriteLine("Unsucces!");
+                    throw new RpcException(new Status(StatusCode.DeadlineExceeded, "Timeout error"));
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw new RpcException(new Status(StatusCode.DeadlineExceeded, "Timeout error"));
             }
 
-            return response;
         }
 
         public async override Task<EventDetails> GetEventByIdAsync(GetByEventId request, ServerCallContext context)
         {
-            var dbEvent = await _eventManagerService.GetEventByIdAsync(request.Id);
-            var eventDetails = _mapper.Map<EventDetails>(dbEvent);
-            return eventDetails;
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            try
+            {
+                //await Task.Delay(5000);
+                Console.WriteLine("GET EVENT BY ID was called");
+                var dbEventTask = _eventManagerService.GetEventByIdAsync(request.Id);
+                await Task.WhenAny(dbEventTask, Task.Delay(Timeout.Infinite, cts.Token));
+                if (dbEventTask.IsCompletedSuccessfully)
+                {
+                    var dbEvent = dbEventTask.Result;
+                    var eventDetails = _mapper.Map<EventDetails>(dbEvent);
+                    Console.WriteLine("Success!");
+                    return eventDetails;
+                }
+                else
+                {
+                    Console.WriteLine("Unsucces!");
+                    throw new RpcException(new Status(StatusCode.DeadlineExceeded, "Timeout error"));
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw new RpcException(new Status(StatusCode.DeadlineExceeded, "Timeout error"));
+
+            }
+
         }
 
         public async override Task<EventDetails> CreateEventAsync(CreateNewEvent request, ServerCallContext context)
         {
-            Console.WriteLine("entered the create event async from management service");
-            var offer = _mapper.Map<Event>(request.Event);
+            Console.WriteLine("CREATE NEW EVENT was called");
 
-            await _eventManagerService.CreateEventAsync(offer);
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            try
+            {
+                var offer = _mapper.Map<Event>(request.Event);
+                //await Task.Delay(1000);
+                var createEventTask = _eventManagerService.CreateEventAsync(offer);
+                await Task.WhenAny(createEventTask, Task.Delay(Timeout.Infinite, cts.Token));
 
-            var eventDetails = _mapper.Map<EventDetails>(offer);
-            Console.WriteLine(eventDetails);
-            Task.FromResult(eventDetails);
-            return eventDetails;
+                if (createEventTask.IsCompletedSuccessfully)
+                {
+                    var eventDetails = _mapper.Map<EventDetails>(offer);
+                    Console.WriteLine(eventDetails);
+                    Console.WriteLine("Success!");
+                    return eventDetails;
+                }
+                else
+                {
+                    Console.WriteLine("Unsucces!");
+                    throw new RpcException(new Status(StatusCode.DeadlineExceeded, "Timeout error"));
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw new RpcException(new Status(StatusCode.DeadlineExceeded, "Timeout error"));
+            }
         }
+
 
         public async override Task<EventDetails> UpdateEventAsync(UpdateEvent request, ServerCallContext context)
         {
-            Console.WriteLine("Event is updated...");
-            var existingEvent = await _eventManagerService.GetEventByIdAsync(request.Event.Id);
-            Console.WriteLine(request.Event.DressCode);
-            if (request.Event.DressCode != "")
+            Console.WriteLine("UPDATE EVENT was called");
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+            try
             {
-                existingEvent.DressCode = request.Event.DressCode;
-            }
-            if (request.Event.Name != "")
-            {
-                existingEvent.Name = request.Event.Name;
-            }
-            if (request.Event.Date != "")
-            {
-                existingEvent.Date = request.Event.Date;
-            }
-            if (request.Event.Location != "")
-            {
-                existingEvent.Location = request.Event.Location;
-            }
-            var dbEvent = _mapper.Map<Event>(request.Event);
+                var existingEventTask = _eventManagerService.GetEventByIdAsync(request.Event.Id);
+                await Task.WhenAny(existingEventTask, Task.Delay(Timeout.Infinite, cts.Token));
+                if (existingEventTask.IsCompletedSuccessfully)
+                {
+                    //var existingEvent = await _eventManagerService.GetEventByIdAsync(request.Event.Id);
+                    var existingEvent = existingEventTask.Result;
+                    if (request.Event.DressCode != "")
+                    {
+                        existingEvent.DressCode = request.Event.DressCode;
+                    }
+                    if (request.Event.Name != "")
+                    {
+                        existingEvent.Name = request.Event.Name;
+                    }
+                    if (request.Event.Date != "")
+                    {
+                        existingEvent.Date = request.Event.Date;
+                    }
+                    if (request.Event.Location != "")
+                    {
+                        existingEvent.Location = request.Event.Location;
+                    }
+                    var dbEvent = _mapper.Map<Event>(request.Event);
 
-            await _eventManagerService.UpdateEventAsync(existingEvent);
+                    await _eventManagerService.UpdateEventAsync(existingEvent);
 
-            var eventDetails = _mapper.Map<EventDetails>(existingEvent);
-            return eventDetails;
+                    var eventDetails = _mapper.Map<EventDetails>(existingEvent);
+                    Console.WriteLine("Success!");
+                    return eventDetails;
+                }
+                else
+                {
+                    Console.WriteLine("Unsucces!");
+                    throw new RpcException(new Status(StatusCode.DeadlineExceeded, "Timeout error"));
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw new RpcException(new Status(StatusCode.DeadlineExceeded, "Timeout error"));
+            }
+
         }
 
         public async override Task<DeleteEventResponse> DeleteEventAsync(DeleteEventRequest request, ServerCallContext context)
         {
+            Console.WriteLine("DELETE EVENT was called");
             var isDeleted = await _eventManagerService.DeleteEventAsync(request.Id);
             var response = new DeleteEventResponse
             {
                 IsDeleted = isDeleted
             };
-
+            Console.WriteLine("Success!");
             return response;
         }
     }
