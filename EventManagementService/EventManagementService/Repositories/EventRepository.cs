@@ -25,7 +25,6 @@ namespace EventManagementService.Repositories
 
         public async Task<Event> CreateEventAsync(Event dbEvent)
         {
-            Console.WriteLine("entered the create event async from manager service");
             var result = _dbContext.Event.Add(dbEvent);
             try
             {
