@@ -1,0 +1,49 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "TaskManagementService.Protos";
+
+service TaskManagerService {
+  rpc GetTaskListAsync (GetByEvent) returns (Tasks);
+  rpc GetTaskByIdAsync (GetByTaskId) returns (TaskDetails);
+  rpc CreateTaskAsync (CreateNewTask) returns (TaskDetails);
+  rpc UpdateTaskAsync (UpdateTask) returns (TaskDetails);
+  rpc DeleteTaskAsync (DeleteTaskRequest) returns (DeleteTaskResponse);
+}
+
+message GetByEvent {
+    int32 eventId = 1;
+}
+
+message GetByTaskId {
+  int32 taskId = 1;
+}
+
+message TaskDetails {
+    int32 id = 1;
+    int32 eventId = 2;
+    string name = 3;
+    string description = 4;
+    string deadline = 5;
+    string status = 6;
+}
+
+message Tasks {
+    repeated TaskDetails items = 1;
+}
+
+message CreateNewTask {
+    TaskDetails task = 1;
+}
+
+message UpdateTask {
+    TaskDetails task = 1;
+}
+
+message DeleteTaskRequest {
+    int32 id = 1;
+}
+
+message DeleteTaskResponse {
+    bool isDeleted = 1;
+}
+

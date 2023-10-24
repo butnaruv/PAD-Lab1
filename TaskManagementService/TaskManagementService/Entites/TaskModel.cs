@@ -1,8 +1,10 @@
-﻿namespace TaskManagementService.Entites
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace TaskManagementService.Entites
 {
     public class TaskModel
     {
-        public int TaskId { get; set; }
+        public int Id { get; set; }
         public int EventId { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
