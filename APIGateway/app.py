@@ -8,7 +8,41 @@ from handlers.task_handler import create_task_grpc, update_task_grpc, get_task_b
 
 app = Flask(__name__)
 
-list = []
+cache = {}
+
+
+@app.before_request
+def hook():
+    if request.method == 'GET' and "get_all_events" in cache.keys():
+        print("Data from cache")
+        return MessageToJson(cache[request.endpoint])
+    if request.method == 'GET' and "get_event_by_id" in cache.keys():
+        event_id = request.view_args.get('event_id')
+        if "get_event_by_id" in cache and isinstance(cache["get_event_by_id"], list):
+            for element in cache["get_event_by_id"]:
+                if event_id == element.id:
+                    print("Data from cache")
+                    return MessageToJson(element)
+    if request.method in ['POST', 'DELETE', 'PUT'] and "get_all_events" in cache.keys():
+        del cache["get_all_events"]
+    if request.method in ['DELETE', 'PUT'] and "get_event_by_id" in cache.keys():
+        del cache["get_event_by_id"]
+
+    if request.method == 'GET' and "get_tasks_by_event" in cache.keys():
+        if request.endpoint == "get_tasks_by_event":
+            print("Data from cache")
+            return MessageToJson(cache[request.endpoint])
+    if request.method == 'GET' and "get_task_by_id" in cache.keys():
+        task_id = request.view_args.get('task_id')
+        if "get_task_by_id" in cache and isinstance(cache["get_task_by_id"], list):
+            for element in cache["get_task_by_id"]:
+                if task_id == element.id:
+                    print("Data from cache")
+                    return MessageToJson(element)
+    if request.method in ['POST', 'DELETE', 'PUT'] and "get_tasks_by_event" in cache.keys():
+        del cache["get_tasks_by_event"]
+    if request.method in ['DELETE', 'PUT'] and "get_task_by_id" in cache.keys():
+        del cache["get_task_by_id"]
 
 
 @app.route('/event', methods=['POST'])
@@ -27,6 +61,8 @@ def get_all_events():
     if isinstance(response, Response):
         return response
     else:
+        cache[request.endpoint] = response
+        print("Data from db")
         return MessageToJson(response)
 
 
@@ -36,6 +72,11 @@ def get_event_by_id(event_id):
     if isinstance(response, Response):
         return response
     else:
+        if request.endpoint in cache.keys():
+            cache[request.endpoint].append(response)
+        else:
+            cache[request.endpoint] = [response]
+        print("Data from db")
         return MessageToJson(response)
 
 
@@ -56,12 +97,6 @@ def delete_event(event_id):
         return response
     else:
         return MessageToJson(response)
-
-
-# @app.route('/event/cahe', methods=['GET'])
-# def print_cache():
-#     print(list)
-#     return json.dumps(list)
 
 
 @app.route('/task', methods=['POST'])
@@ -88,6 +123,8 @@ def get_tasks_by_event(event_id):
     if isinstance(response, Response):
         return response
     else:
+        cache[request.endpoint] = response
+        print("Data from db")
         return MessageToJson(response)
 
 
@@ -99,6 +136,11 @@ def get_task_by_id(task_id):
     if isinstance(response, Response):
         return response
     else:
+        if request.endpoint in cache.keys():
+            cache[request.endpoint].append(response)
+        else:
+            cache[request.endpoint] = [response]
+        print("Data from db")
         return MessageToJson(response)
 
 
