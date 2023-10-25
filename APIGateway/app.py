@@ -1,4 +1,6 @@
 from flask import Flask, request, make_response, json, Response
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from google.protobuf.json_format import MessageToJson
 
 from handlers.event_handler import create_event_grpc, get_all_events_grpc, get_event_by_id_grpc, update_event_grpc, \
@@ -7,7 +9,11 @@ from handlers.task_handler import create_task_grpc, update_task_grpc, get_task_b
     get_tasks_by_event_grpc
 
 app = Flask(__name__)
-
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["3 per second"],
+)
 cache = {}
 
 
