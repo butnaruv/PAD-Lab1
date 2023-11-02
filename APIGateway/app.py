@@ -20,8 +20,10 @@ cache = {}
 @app.before_request
 def hook():
     if request.method == 'GET' and "get_all_events" in cache.keys():
-        print("Data from cache")
-        return MessageToJson(cache[request.endpoint])
+        if request.endpoint == "get_all_events":
+            print("Data from cache")
+            test = cache[request.endpoint]
+            return MessageToJson(cache[request.endpoint])
     if request.method == 'GET' and "get_event_by_id" in cache.keys():
         event_id = request.view_args.get('event_id')
         if "get_event_by_id" in cache and isinstance(cache["get_event_by_id"], list):
