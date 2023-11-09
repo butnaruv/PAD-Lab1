@@ -1,0 +1,146 @@
+{
+	"info": {
+		"_postman_id": "56c723ff-7826-47aa-b50f-029d80aceab4",
+		"name": "PAD",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "24658725"
+	},
+	"item": [
+		{
+			"name": "Task methods (Gateway)",
+			"item": [
+				{
+					"name": "Post task",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"eventId\" : 56,\r\n    \"name\" : \"Change colors of \",\r\n    \"description\" : \"Use google\",\r\n    \"deadline\" : \"25 octombre\",\r\n    \"status\" : \"to do\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:5000/task"
+					},
+					"response": []
+				},
+				{
+					"name": "Update task",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"deadline\" : \"5555555555\",\r\n    \"status\" : \"done\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:5000/task/11"
+					},
+					"response": []
+				},
+				{
+					"name": "Get task by id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://127.0.0.1:5000/task/10"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete task",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "http://127.0.0.1:5000/task/7"
+					},
+					"response": []
+				},
+				{
+					"name": "Get all tasks by event id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://127.0.0.1:5000/task/eventId/56"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Event methods (Gateway)",
+			"item": [
+				{
+					"name": "Get event by id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://127.0.0.1:5000/event/59"
+					},
+					"response": []
+				},
+				{
+					"name": "Post event",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\r\n\"name\": \"A\",\r\n\"date\": \"tommorow\",\r\n\"location\": \"my location\",\r\n\"dressCode\": \"whatever\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:5000/event"
+					},
+					"response": []
+				},
+				{
+					"name": "Update event",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\"name\": \"Updated name\",\r\n\"dressCode\": \"Updated secondly\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "http://127.0.0.1:5000/event/58"
+					},
+					"response": []
+				},
+				{
+					"name": "Get all events",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": "http://127.0.0.1:5000/event"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete event",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": "http://127.0.0.1:5000/event/58"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
