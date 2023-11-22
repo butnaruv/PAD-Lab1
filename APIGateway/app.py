@@ -1,8 +1,13 @@
+import threading
+from concurrent import futures
+
+import grpc
 from flask import Flask, request, make_response, json, Response
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from google.protobuf.json_format import MessageToJson
 
+from generated_from_proto import communication_pb2_grpc, communication_pb2
 from handlers.event_handler import create_event_grpc, get_all_events_grpc, get_event_by_id_grpc, update_event_grpc, \
     delete_event_grpc
 from handlers.task_handler import create_task_grpc, update_task_grpc, get_task_by_id_grpc, delete_task_grpc, \
@@ -15,7 +20,8 @@ limiter = Limiter(
     default_limits=["3 per second"],
 )
 cache = {}
-
+eventManagerUrl = ''
+taskManagerUrl = ''
 
 @app.before_request
 def hook():
@@ -65,6 +71,7 @@ def create_event():
 
 @app.route('/event', methods=['Get'])
 def get_all_events():
+    print("test")
     response = get_all_events_grpc()
     if isinstance(response, Response):
         return response
@@ -171,5 +178,33 @@ def delete_task(task_id):
         return MessageToJson(response)
 
 
-if __name__ == '__main__':
-    app.run()
+class CommunicationServicer(communication_pb2_grpc.CommunicationServicer):
+
+    def SendMessage(self, request, context):
+        print(f"Service url:{request.message}.")
+        print(request.sender)
+        if request.sender == 'Event manager':
+            eventManagerUrl = request.message
+            print("Event manager url: " + eventManagerUrl)
+        hello_reply = communication_pb2.MessageResponse()
+        hello_reply.message = f"Service {request.message} was successfully registered in gateway."
+        return hello_reply
+
+
+def grpc_server():
+    stop_event = threading.Event()
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    communication_pb2_grpc.add_CommunicationServicer_to_server(CommunicationServicer(), server)
+    server.add_insecure_port("[::]:5003")
+    try:
+        server.start()
+        print("grpc server started at port : 4010")
+        stop_event.wait()
+
+    except Exception as e:
+        print(f"ERROR on running grpc server: {e}")
+        server.stop(0)
+
+
+grpc_server_thread = threading.Thread(target=grpc_server)
+grpc_server_thread.start()
