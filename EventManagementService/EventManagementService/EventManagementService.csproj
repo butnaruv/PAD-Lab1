@@ -4,6 +4,8 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>96a96a27-3739-40a2-91ba-85c1d1aa73b4</UserSecretsId>
+    <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,6 +24,7 @@
     <PackageReference Include="Google.Protobuf" Version="3.24.4" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.49.0" />
     <PackageReference Include="Grpc.AspNetCore.HealthChecks" Version="2.58.0" />
+    <PackageReference Include="Grpc.Core" Version="2.46.6" />
     <PackageReference Include="Grpc.HealthCheck" Version="2.58.0" />
     <PackageReference Include="Grpc.Net.Client" Version="2.57.0" />
     <PackageReference Include="Grpc.Tools" Version="2.58.0">
@@ -38,6 +41,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.4" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,6 +3,7 @@ using EventManagementService.Entities;
 using EventManagementService.Protos;
 using EventManagementService.Repositories;
 using Grpc.Core;
+using Grpc.Net.Client;
 using EventManagerService = EventManagementService.Protos.EventManagerService;
 
 namespace EventManagementService.Services

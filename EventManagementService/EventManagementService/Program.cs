@@ -1,6 +1,9 @@
+using EventManagementService;
 using EventManagementService.Data;
+using EventManagementService.Entities;
 using EventManagementService.Repositories;
 using EventManagementService.Services;
+using Grpc.Net.Client;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 
@@ -21,7 +24,15 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 app.MapGrpcService<EventService>();
 app.MapGrpcService<CheckHealthService>();
+app.MapGrpcService<CommunicationService>();
 app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
-
+//var periodicTimer = new PeriodicTimer(TimeSpan.FromSeconds(10));
+//while (await periodicTimer.WaitForNextTickAsync())
+//{
+//    // Place function in here..
+//    EventManager.SendMessage();
+//    Console.WriteLine("Sending");
+//}
+EventManager.SendMessage();
 app.Run();
 
