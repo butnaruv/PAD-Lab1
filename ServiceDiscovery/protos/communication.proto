@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option csharp_namespace = "EventManagementService";
+
+service Communication {
+  rpc SendMessage (MessageRequest) returns (MessageResponse);
+}
+
+message MessageRequest {
+	string sender = 1;
+	string message = 2;
+}
+
+message MessageResponse {
+  string message = 1;
+}
