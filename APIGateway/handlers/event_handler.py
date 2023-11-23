@@ -2,10 +2,11 @@ import grpc
 from flask import make_response
 
 from generated_from_proto import eventManager_pb2_grpc, eventManager_pb2, communication_pb2_grpc, communication_pb2
+from load_balancer import get_url
 
 
 def create_event_grpc(data):
-    with grpc.insecure_channel('localhost:5116') as channel:
+    with grpc.insecure_channel(get_url()) as channel:
         stub = eventManager_pb2_grpc.EventManagerServiceStub(channel)
 
         request = eventManager_pb2.EventDetails(name=data.get("name"),
@@ -28,7 +29,7 @@ def create_event_grpc(data):
 
 
 def get_all_events_grpc():
-    with grpc.insecure_channel('localhost:5116') as channel:
+    with grpc.insecure_channel(get_url()) as channel:
         stub = eventManager_pb2_grpc.EventManagerServiceStub(channel)
         request = eventManager_pb2.Empty()
         try:
@@ -47,7 +48,7 @@ def get_all_events_grpc():
 
 
 def get_event_by_id_grpc(event_id):
-    with grpc.insecure_channel('localhost:5116') as channel:
+    with grpc.insecure_channel(get_url()) as channel:
         stub = eventManager_pb2_grpc.EventManagerServiceStub(channel)
         request = eventManager_pb2.GetByEventId(id=event_id)
         response = None
@@ -65,7 +66,7 @@ def get_event_by_id_grpc(event_id):
 
 
 def update_event_grpc(event_id, data):
-    with grpc.insecure_channel('localhost:5116') as channel:
+    with grpc.insecure_channel(get_url()) as channel:
         stub = eventManager_pb2_grpc.EventManagerServiceStub(channel)
 
         # Create a request message with the event ID
@@ -93,7 +94,7 @@ def update_event_grpc(event_id, data):
 
 
 def delete_event_grpc(event_id):
-    with grpc.insecure_channel('localhost:5116') as channel:
+    with grpc.insecure_channel(get_url()) as channel:
         stub = eventManager_pb2_grpc.EventManagerServiceStub(channel)
         request = eventManager_pb2.DeleteEventRequest(id=event_id)
 

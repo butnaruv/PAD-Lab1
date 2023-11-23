@@ -12,7 +12,6 @@ from handlers.event_handler import create_event_grpc, get_all_events_grpc, get_e
     delete_event_grpc
 from handlers.task_handler import create_task_grpc, update_task_grpc, get_task_by_id_grpc, delete_task_grpc, \
     get_tasks_by_event_grpc
-
 app = Flask(__name__)
 limiter = Limiter(
     get_remote_address,
@@ -20,8 +19,9 @@ limiter = Limiter(
     default_limits=["3 per second"],
 )
 cache = {}
+listOfEventManagerUrl = []
 eventManagerUrl = ''
-taskManagerUrl = ''
+
 
 @app.before_request
 def hook():
@@ -182,10 +182,9 @@ class CommunicationServicer(communication_pb2_grpc.CommunicationServicer):
 
     def SendMessage(self, request, context):
         print(f"Service url:{request.message}.")
-        print(request.sender)
         if request.sender == 'Event manager':
-            eventManagerUrl = request.message
-            print("Event manager url: " + eventManagerUrl)
+            listOfEventManagerUrl.append(request.message)
+        print(listOfEventManagerUrl)
         hello_reply = communication_pb2.MessageResponse()
         hello_reply.message = f"Service {request.message} was successfully registered in gateway."
         return hello_reply
