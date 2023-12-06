@@ -23,6 +23,22 @@
         "ASPNETCORE_URLS": "http://+:80"
       },
       "publishAllPorts": true
+    },
+    "http2": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5117"
+    },
+    "http3": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://localhost:5118"
     }
   }
 }

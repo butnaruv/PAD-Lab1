@@ -1,0 +1,48 @@
+version: '3'
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server
+    environment:
+      SA_PASSWORD: sa
+      ACCEPT_EULA: Y
+    ports:
+      - "1433:1433"
+    networks:
+      - app-network
+
+  api1:
+    container_name: event-serice
+    image: valeriabutnaru/pad_lab1:api1
+    build:
+      dockerfile: EventManagementService/EventManagementService/Dockerfile
+    ports:
+      - "5001:80"
+    depends_on:
+      - mssql
+    networks:
+      - app-network
+
+  api2:
+    container_name: task-serice
+    image: valeriabutnaru/pad_lab1:api2
+    build:
+      dockerfile: TaskManagementService/TaskManagementService/Dockerfile
+    ports:
+      - "5002:80"
+    depends_on:
+      - mssql
+    networks:
+      - app-network
+
+  flask-gateway:
+    image: valeriabutnaru/pad_lab1:api
+    build:
+      context: ./APIGateway
+    ports:
+      - "5000:5000"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

@@ -1,6 +1,7 @@
 import grpc
 from flask import make_response
 
+from circuit_breaker import circuit_breaker
 from generated_from_proto import eventManager_pb2_grpc, eventManager_pb2, communication_pb2_grpc, communication_pb2
 from load_balancer import get_url
 
@@ -38,9 +39,15 @@ def get_all_events_grpc():
             print(e)
             exception_str = str(e)
             if "Timeout error" in exception_str:
+                print("Task timeout")
                 return make_response('Task timeout', 408)
             else:
-                return make_response('Request failed', 500)
+                print("Request failed")
+                stop = circuit_breaker()
+                if stop:
+                    return get_all_events_grpc()
+                else:
+                    return
     if response is None:
         return make_response('No events', 200)
     else:

@@ -197,7 +197,7 @@ def grpc_server():
     server.add_insecure_port("[::]:5003")
     try:
         server.start()
-        print("grpc server started at port : 4010")
+        print("grpc server started at port : 5000")
         stop_event.wait()
 
     except Exception as e:

@@ -36,3 +36,4 @@ app.MapGet("/", () => "Communication with gRPC endpoints must be made through a 
 EventManager.SendMessage();
 app.Run();
 
+

@@ -16,7 +16,7 @@ class CommunicationServicer(communication_pb2_grpc.CommunicationServicer):
         print(request.message)
         with grpc.insecure_channel('localhost:5003') as channel:
             stub = communication_pb2_grpc.CommunicationStub(channel)
-            requestObject = communication_pb2.MessageRequest(sender = request.sender,
+            requestObject = communication_pb2.MessageRequest(sender=request.sender,
                                                              message=request.message)
             response = stub.SendMessage(requestObject)
 
