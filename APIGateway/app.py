@@ -16,7 +16,7 @@ from handlers.event_handler import create_event_grpc, get_event_by_id_grpc, upda
     delete_event_grpc, get_all_events_grpc
 from handlers.task_handler import create_task_grpc, update_task_grpc, get_task_by_id_grpc, delete_task_grpc, \
     get_tasks_by_event_grpc
-from load_balancer import load_balance_requests, get_url
+from load_balancer import load_balance_requests, get_url, reset_index
 from Classes.event_manager_class import EventManagerClass
 
 app = Flask(__name__)
@@ -70,6 +70,7 @@ def remove_route(url):
     element = "http://" + url
     if element in listOfEventManagerUrl:
         listOfEventManagerUrl.remove(element)
+        print(f"Url is removed. Updated list: {listOfEventManagerUrl}")
 
 @app.route('/event', methods=['POST'])
 def create_event():
@@ -77,21 +78,24 @@ def create_event():
     url = get_url()
     if isinstance(url, Response):
         return url
+    event_manager = EventManagerClass()
+    breaker = event_manager.breaker
     try:
-        response = get_all_events_grpc(url)
+        create_event_function = event_manager.create_event
+        response = create_event_function(url, data)
     except Exception  as e:
         while breaker.state.name == "closed":
             try:
-                response = create_event_grpc(data, url)
+                response = create_event_function(url, data)
                 return response
             except Exception as e:
                 print()
 
         if breaker.state.name == "open":
-            new_url = get_url()
-            if isinstance(url, Response) and new_url != url:
-                return url
-            response = get_all_events_grpc(new_url)
+            remove_route(url)
+            print(f"Rerouting activat")
+            reset_index()
+            return create_event()
 
     if isinstance(response, Response):
         return response
@@ -119,18 +123,9 @@ def get_all_events():
                 print()
         if breaker.state.name == "open":
             remove_route(url)
-            print(f"Url is removed. Updated list: {listOfEventManagerUrl}")
-            new_url = get_url()
-            if isinstance(url, Response):
-                return make_response("No more services available")
-
-            new_event_manager = EventManagerClass()
-            new_get_all_events_function = new_event_manager.get_all_events
-            print("aici")
-            response = new_get_all_events_function(new_url)
-            # new_event_manager.breaker = CircuitBreaker(fail_max=3, reset_timeout=10)                response = new_get_all_events_function(new_url)
-            print("acolo")
-            print(response)
+            print(f"Rerouting activat")
+            reset_index()
+            return get_all_events()
 
     if isinstance(response, Response):
         return response
@@ -160,15 +155,9 @@ def get_event_by_id(event_id):
                 print()
         if breaker.state.name == "open":
             remove_route(url)
-            print(f"Url is removed. Updated list: {listOfEventManagerUrl}")
-            new_url = get_url()
-            if isinstance(url, Response):
-                return url
-            new_event_manager = EventManagerClass()
-            new_get_event_by_id_function = new_event_manager.get_event_by_id
-            print("aici")
-            response = new_get_event_by_id_function(new_url, event_id)
-            print("acolo")
+            print(f"Rerouting activat")
+            reset_index()
+            return get_event_by_id(event_id)
 
     if isinstance(response, Response):
         return make_response("No more services available")

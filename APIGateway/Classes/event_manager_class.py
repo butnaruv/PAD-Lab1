@@ -56,5 +56,26 @@ class EventManagerClass:
             #
             #
 
-
         return get_event_by_id_internal
+
+    @property
+    def create_event(self):
+        @self.breaker
+        def create_event_internal(url, data):
+            channel = grpc.insecure_channel(url)
+            stub = eventManager_pb2_grpc.EventManagerServiceStub(channel)
+            request = request = eventManager_pb2.EventDetails(name=data.get("name"),
+                                                              date=data.get("date"),
+                                                              location=data.get("location"),
+                                                              dressCode=data.get("dressCode"))
+            new_event = eventManager_pb2.CreateNewEvent()
+            new_event.event.CopyFrom(request)
+            try:
+                response = stub.CreateEventAsync(new_event)
+                return response
+            except grpc.RpcError as err:
+                print(f"grpc error: {err.code()}")
+                raise Exception(err)
+            except Exception as e:
+                raise Exception(e)
+        return create_event_internal

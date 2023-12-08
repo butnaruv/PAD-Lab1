@@ -11,11 +11,12 @@ def load_balance_requests():
     if total_urls == 0:
         raise Exception("No services available")
     print(f"index {index_url}")
-    serviceUrl = listOfEventManagerUrl[index_url%total_urls]
+    serviceUrl = listOfEventManagerUrl[index_url % total_urls]
     serviceUrl = serviceUrl.split("://", 1)[-1]
     print(serviceUrl)
-    index_url = index_url+1
+    index_url = index_url + 1
     return serviceUrl
+
 
 def get_url():
     try:
@@ -24,3 +25,8 @@ def get_url():
     except Exception as e:
         print(e)
         return make_response("No sources available")
+
+
+def reset_index():
+    global index_url
+    index_url = 0
