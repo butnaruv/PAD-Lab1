@@ -1,6 +1,5 @@
 number_of_tries = 0
 
-
 def circuit_breaker():
     global number_of_tries
     number_of_tries += 1

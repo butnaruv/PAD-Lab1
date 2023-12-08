@@ -1,17 +1,24 @@
 import threading
+import time
 from concurrent import futures
 
+import circuitbreaker
 import grpc
+import pybreaker
+import requests
+from circuitbreaker import circuit
 from flask import Flask, request, make_response, json, Response
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from google.protobuf.json_format import MessageToJson
-
 from generated_from_proto import communication_pb2_grpc, communication_pb2
-from handlers.event_handler import create_event_grpc, get_all_events_grpc, get_event_by_id_grpc, update_event_grpc, \
-    delete_event_grpc
+from handlers.event_handler import create_event_grpc, get_event_by_id_grpc, update_event_grpc, \
+    delete_event_grpc, get_all_events_grpc
 from handlers.task_handler import create_task_grpc, update_task_grpc, get_task_by_id_grpc, delete_task_grpc, \
     get_tasks_by_event_grpc
+from load_balancer import load_balance_requests, get_url
+from Classes.event_manager_class import EventManagerClass
+
 app = Flask(__name__)
 limiter = Limiter(
     get_remote_address,
@@ -59,10 +66,33 @@ def hook():
         del cache["get_task_by_id"]
 
 
+def remove_route(url):
+    element = "http://" + url
+    if element in listOfEventManagerUrl:
+        listOfEventManagerUrl.remove(element)
+
 @app.route('/event', methods=['POST'])
 def create_event():
     data = request.get_json()
-    response = create_event_grpc(data)
+    url = get_url()
+    if isinstance(url, Response):
+        return url
+    try:
+        response = get_all_events_grpc(url)
+    except Exception  as e:
+        while breaker.state.name == "closed":
+            try:
+                response = create_event_grpc(data, url)
+                return response
+            except Exception as e:
+                print()
+
+        if breaker.state.name == "open":
+            new_url = get_url()
+            if isinstance(url, Response) and new_url != url:
+                return url
+            response = get_all_events_grpc(new_url)
+
     if isinstance(response, Response):
         return response
     else:
@@ -71,8 +101,37 @@ def create_event():
 
 @app.route('/event', methods=['Get'])
 def get_all_events():
-    print("test")
-    response = get_all_events_grpc()
+    url = get_url()
+    if isinstance(url, Response):
+        return url
+    event_manager = EventManagerClass()
+    breaker = event_manager.breaker
+    print(breaker.fail_max)
+    try:
+        get_all_events_function = event_manager.get_all_events
+        response = get_all_events_function(url)
+    except Exception  as e:
+        while breaker.state.name == "closed":
+            try:
+                response = get_all_events_function(url)
+                return MessageToJson(response)
+            except Exception as e:
+                print()
+        if breaker.state.name == "open":
+            remove_route(url)
+            print(f"Url is removed. Updated list: {listOfEventManagerUrl}")
+            new_url = get_url()
+            if isinstance(url, Response):
+                return make_response("No more services available")
+
+            new_event_manager = EventManagerClass()
+            new_get_all_events_function = new_event_manager.get_all_events
+            print("aici")
+            response = new_get_all_events_function(new_url)
+            # new_event_manager.breaker = CircuitBreaker(fail_max=3, reset_timeout=10)                response = new_get_all_events_function(new_url)
+            print("acolo")
+            print(response)
+
     if isinstance(response, Response):
         return response
     else:
@@ -83,9 +142,36 @@ def get_all_events():
 
 @app.route('/event/<int:event_id>', methods=['GET'])
 def get_event_by_id(event_id):
-    response = get_event_by_id_grpc(event_id)
+    url = get_url()
+    if isinstance(url, Response):
+        return url
+
+    event_manager = EventManagerClass()
+    breaker = event_manager.breaker
+    try:
+        get_event_by_id_function = event_manager.get_event_by_id
+        response = get_event_by_id_function(url, event_id)
+    except Exception as e:
+        while breaker.state.name == "closed":
+            try:
+                response = get_event_by_id_function(url, event_id)
+                return response
+            except Exception as e:
+                print()
+        if breaker.state.name == "open":
+            remove_route(url)
+            print(f"Url is removed. Updated list: {listOfEventManagerUrl}")
+            new_url = get_url()
+            if isinstance(url, Response):
+                return url
+            new_event_manager = EventManagerClass()
+            new_get_event_by_id_function = new_event_manager.get_event_by_id
+            print("aici")
+            response = new_get_event_by_id_function(new_url, event_id)
+            print("acolo")
+
     if isinstance(response, Response):
-        return response
+        return make_response("No more services available")
     else:
         if request.endpoint in cache.keys():
             cache[request.endpoint].append(response)
@@ -98,7 +184,10 @@ def get_event_by_id(event_id):
 @app.route('/event/<int:event_id>', methods=['PUT'])
 def update_event(event_id):
     data = request.get_json()
-    response = update_event_grpc(event_id, data)
+    url = get_url()
+    if isinstance(url, Response):
+        return url
+    response = update_event_grpc(event_id, data, url)
     if isinstance(response, Response):
         return response
     else:
@@ -107,7 +196,10 @@ def update_event(event_id):
 
 @app.route('/event/<int:event_id>', methods=['DELETE'])
 def delete_event(event_id):
-    response = delete_event_grpc(event_id)
+    url = get_url()
+    if isinstance(url, Response):
+        return url
+    response = delete_event_grpc(event_id, url)
     if isinstance(response, Response):
         return response
     else:
@@ -118,7 +210,10 @@ def delete_event(event_id):
 def create_task():
     data = request.get_json()
     list_event_id = []
-    all_events = get_all_events_grpc()
+    url = get_url()
+    if isinstance(url, Response):
+        return url
+    all_events = get_all_events_grpc(url)
     for event in all_events.items:
         event_id = event.id
         list_event_id.append(event_id)
@@ -134,7 +229,10 @@ def create_task():
 
 @app.route('/task/eventId/<int:event_id>', methods=['Get'])
 def get_tasks_by_event(event_id):
-    response = get_tasks_by_event_grpc(event_id)
+    url = get_url()
+    if isinstance(url, Response):
+        return url
+    response = get_tasks_by_event_grpc(event_id, url)
     if isinstance(response, Response):
         return response
     else:
@@ -145,8 +243,10 @@ def get_tasks_by_event(event_id):
 
 @app.route('/task/<int:task_id>', methods=['GET'])
 def get_task_by_id(task_id):
-    print("test")
-    response = get_task_by_id_grpc(task_id)
+    url = get_url()
+    if isinstance(url, Response):
+        return url
+    response = get_task_by_id_grpc(task_id, url)
 
     if isinstance(response, Response):
         return response
@@ -162,7 +262,10 @@ def get_task_by_id(task_id):
 @app.route('/task/<int:task_id>', methods=['PUT'])
 def update_task(task_id):
     data = request.get_json()
-    response = update_task_grpc(task_id, data)
+    url = get_url()
+    if isinstance(url, Response):
+        return url
+    response = update_task_grpc(task_id, data, url)
     if isinstance(response, Response):
         return response
     else:
@@ -171,18 +274,23 @@ def update_task(task_id):
 
 @app.route('/task/<int:task_id>', methods=['DELETE'])
 def delete_task(task_id):
-    response = delete_task_grpc(task_id)
+    url = get_url()
+    if isinstance(url, Response):
+        return url
+    response = delete_task_grpc(task_id, url)
     if isinstance(response, Response):
         return response
     else:
         return MessageToJson(response)
 
 
+
+
 class CommunicationServicer(communication_pb2_grpc.CommunicationServicer):
 
     def SendMessage(self, request, context):
         print(f"Service url:{request.message}.")
-        if request.sender == 'Event manager':
+        if request.sender == 'Event manager' and request.message not in listOfEventManagerUrl:
             listOfEventManagerUrl.append(request.message)
         print(listOfEventManagerUrl)
         hello_reply = communication_pb2.MessageResponse()

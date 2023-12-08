@@ -4,8 +4,8 @@ from flask import make_response
 from generated_from_proto import taskManager_pb2_grpc, taskManager_pb2
 
 
-def create_task_grpc(data):
-    with grpc.insecure_channel('localhost:5192') as channel:
+def create_task_grpc(data, url):
+    with grpc.insecure_channel(url) as channel:
         stub = taskManager_pb2_grpc.TaskManagerServiceStub(channel)
 
         request = taskManager_pb2.TaskDetails(name=data.get("name"),
@@ -29,8 +29,8 @@ def create_task_grpc(data):
         return response
 
 
-def get_task_by_id_grpc(task_id):
-    with grpc.insecure_channel('localhost:5192') as channel:
+def get_task_by_id_grpc(task_id, url):
+    with grpc.insecure_channel(url) as channel:
         stub = taskManager_pb2_grpc.TaskManagerServiceStub(channel)
         request = taskManager_pb2.GetByTaskId(taskId=task_id)
         try:
@@ -50,8 +50,8 @@ def get_task_by_id_grpc(task_id):
             return response
 
 
-def get_tasks_by_event_grpc(event_id):
-    with grpc.insecure_channel('localhost:5192') as channel:
+def get_tasks_by_event_grpc(event_id, url):
+    with grpc.insecure_channel(url) as channel:
         stub = taskManager_pb2_grpc.TaskManagerServiceStub(channel)
         request = taskManager_pb2.GetByEvent(eventId=event_id)
         response = None
@@ -71,8 +71,8 @@ def get_tasks_by_event_grpc(event_id):
             return make_response('No tasks assigned to this event', 404)
 
 
-def update_task_grpc(task_id, data):
-    with grpc.insecure_channel('localhost:5192') as channel:
+def update_task_grpc(task_id, data, url):
+    with grpc.insecure_channel(url) as channel:
         stub = taskManager_pb2_grpc.TaskManagerServiceStub(channel)
 
         # Create a request message with the event ID
@@ -99,8 +99,9 @@ def update_task_grpc(task_id, data):
         else:
             return make_response('Update failed', 418)
 
-def delete_task_grpc(task_id):
-    with grpc.insecure_channel('localhost:5192') as channel:
+
+def delete_task_grpc(task_id, url):
+    with grpc.insecure_channel(url) as channel:
         stub = taskManager_pb2_grpc.TaskManagerServiceStub(channel)
         request = taskManager_pb2.DeleteTaskRequest(id=task_id)
 
