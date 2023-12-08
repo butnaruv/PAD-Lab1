@@ -79,3 +79,53 @@ class EventManagerClass:
             except Exception as e:
                 raise Exception(e)
         return create_event_internal
+
+    @property
+    def update_event(self):
+        @self.breaker
+        def update_event_internal(url, event_id, data):
+            channel = grpc.insecure_channel(url)
+            stub = eventManager_pb2_grpc.EventManagerServiceStub(channel)
+            request = eventManager_pb2.EventDetails(id=event_id,
+                                                    name=data.get("name"),
+                                                    date=data.get("date"),
+                                                    location=data.get("location"),
+                                                    dressCode=data.get("dressCode")
+                                                    )
+            updated_event = eventManager_pb2.UpdateEvent()
+            updated_event.event.CopyFrom(request)
+            try:
+                response = stub.UpdateEventAsync(updated_event)
+                return response
+            except grpc.RpcError as err:
+                print(f"grpc error: {err.code()}")
+                if err.code() == grpc.StatusCode.NOT_FOUND:
+                    return make_response('Event not found', 404)
+                else:
+                    raise Exception(err)
+            except Exception as e:
+                raise Exception(e)
+
+        return update_event_internal
+
+    @property
+    def delete_event(self):
+        @self.breaker
+        def delete_event_internal(url, event_id):
+            channel = grpc.insecure_channel(url)
+            stub = eventManager_pb2_grpc.EventManagerServiceStub(channel)
+            request = eventManager_pb2.DeleteEventRequest(id=event_id)
+
+            try:
+                response = stub.DeleteEventAsync(request)
+                return response
+
+            except grpc.RpcError as err:
+                print(f"grpc error: {err.code()}")
+                if err.code() == grpc.StatusCode.NOT_FOUND:
+                    return make_response('Event not found', 404)
+                else:
+                    raise Exception(err)
+            except Exception as e:
+                raise Exception(e)
+        return delete_event_internal

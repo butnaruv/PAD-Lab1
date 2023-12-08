@@ -67,6 +67,7 @@ def hook():
 
 
 def remove_route(url):
+    print(f"Initial list of services: {listOfEventManagerUrl}")
     element = "http://" + url
     if element in listOfEventManagerUrl:
         listOfEventManagerUrl.remove(element)
@@ -176,11 +177,29 @@ def update_event(event_id):
     url = get_url()
     if isinstance(url, Response):
         return url
-    response = update_event_grpc(event_id, data, url)
+    event_manager = EventManagerClass()
+    breaker = event_manager.breaker
+    try:
+        update_event_function = event_manager.update_event
+        response = update_event_function(url, event_id, data)
+    except Exception as e:
+        while breaker.state.name == "closed":
+            try:
+                response = update_event_function(url, event_id, data)
+                return response
+            except Exception as e:
+                print()
+        if breaker.state.name == "open":
+            remove_route(url)
+            print(f"Rerouting activat")
+            reset_index()
+            return update_event(event_id)
+
     if isinstance(response, Response):
         return response
     else:
         return MessageToJson(response)
+
 
 
 @app.route('/event/<int:event_id>', methods=['DELETE'])
@@ -188,7 +207,24 @@ def delete_event(event_id):
     url = get_url()
     if isinstance(url, Response):
         return url
-    response = delete_event_grpc(event_id, url)
+    event_manager = EventManagerClass()
+    breaker = event_manager.breaker
+    try:
+        delete_event_function = event_manager.delete_event
+        response = delete_event_function(url, event_id)
+    except Exception as e:
+        while breaker.state.name == "closed":
+            try:
+                response = delete_event_function(url, event_id)
+                return response
+            except Exception as e:
+                print()
+        if breaker.state.name == "open":
+            remove_route(url)
+            print(f"Rerouting activat")
+            reset_index()
+            return delete_event(event_id)
+
     if isinstance(response, Response):
         return response
     else:
