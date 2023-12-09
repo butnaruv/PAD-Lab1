@@ -1,9 +1,8 @@
 import grpc
-from flask import make_response, Response
+from flask import make_response
 from pybreaker import CircuitBreaker
 
 from generated_from_proto import eventManager_pb2_grpc, eventManager_pb2
-from load_balancer import get_url
 
 
 class EventManagerClass:

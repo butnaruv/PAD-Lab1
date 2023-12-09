@@ -1,32 +1,32 @@
 from flask import make_response
 
-index_url = 0
+index_url = {}
 
 # fa index url dictionar. key = serviciu
 
-def load_balance_requests():
+def load_balance_requests(list_of_urls, key):
     global index_url
-    from app import listOfEventManagerUrl
-    total_urls = len(listOfEventManagerUrl)
+    index_url.setdefault(key, 0)
+    total_urls = len(list_of_urls)
     if total_urls == 0:
         raise Exception("No services available")
-    print(f"index {index_url}")
-    serviceUrl = listOfEventManagerUrl[index_url % total_urls]
+    print(f"index {index_url[key]}")
+    serviceUrl = list_of_urls[index_url[key] % total_urls]
     serviceUrl = serviceUrl.split("://", 1)[-1]
     print(serviceUrl)
-    index_url = index_url + 1
+    index_url[key] += 1
     return serviceUrl
 
 
-def get_url():
+def get_url(list_of_urls, key):
     try:
-        url = load_balance_requests()
+        url = load_balance_requests(list_of_urls, key)
         return url
     except Exception as e:
         print(e)
         return make_response("No sources available")
 
 
-def reset_index():
+def reset_index(key):
     global index_url
-    index_url = 0
+    index_url[key] = 0

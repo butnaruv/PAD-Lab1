@@ -18,6 +18,7 @@ from handlers.task_handler import create_task_grpc, update_task_grpc, get_task_b
     get_tasks_by_event_grpc
 from load_balancer import load_balance_requests, get_url, reset_index
 from Classes.event_manager_class import EventManagerClass
+from Classes.task_manager_class import TaskManagerClass
 
 app = Flask(__name__)
 limiter = Limiter(
@@ -27,6 +28,7 @@ limiter = Limiter(
 )
 cache = {}
 listOfEventManagerUrl = []
+listOfTaskManagerUrl = []
 eventManagerUrl = ''
 
 
@@ -67,16 +69,23 @@ def hook():
 
 
 def remove_route(url):
-    print(f"Initial list of services: {listOfEventManagerUrl}")
+    print(f"Initial list of event services: {listOfEventManagerUrl}")
     element = "http://" + url
     if element in listOfEventManagerUrl:
         listOfEventManagerUrl.remove(element)
         print(f"Url is removed. Updated list: {listOfEventManagerUrl}")
 
+def remove_task_route(url):
+    print(f"Initial list of task services: {listOfTaskManagerUrl}")
+    element = "http://" + url
+    if element in listOfTaskManagerUrl:
+        listOfTaskManagerUrl.remove(element)
+        print(f"Url is removed. Updated list: {listOfTaskManagerUrl}")
+
 @app.route('/event', methods=['POST'])
 def create_event():
     data = request.get_json()
-    url = get_url()
+    url = get_url(listOfEventManagerUrl, "event")
     if isinstance(url, Response):
         return url
     event_manager = EventManagerClass()
@@ -95,7 +104,7 @@ def create_event():
         if breaker.state.name == "open":
             remove_route(url)
             print(f"Rerouting activat")
-            reset_index()
+            reset_index("event")
             return create_event()
 
     if isinstance(response, Response):
@@ -106,7 +115,7 @@ def create_event():
 
 @app.route('/event', methods=['Get'])
 def get_all_events():
-    url = get_url()
+    url = get_url(listOfEventManagerUrl, "event")
     if isinstance(url, Response):
         return url
     event_manager = EventManagerClass()
@@ -125,7 +134,7 @@ def get_all_events():
         if breaker.state.name == "open":
             remove_route(url)
             print(f"Rerouting activat")
-            reset_index()
+            reset_index("event")
             return get_all_events()
 
     if isinstance(response, Response):
@@ -138,7 +147,7 @@ def get_all_events():
 
 @app.route('/event/<int:event_id>', methods=['GET'])
 def get_event_by_id(event_id):
-    url = get_url()
+    url = get_url(listOfEventManagerUrl, "event")
     if isinstance(url, Response):
         return url
 
@@ -157,11 +166,12 @@ def get_event_by_id(event_id):
         if breaker.state.name == "open":
             remove_route(url)
             print(f"Rerouting activat")
-            reset_index()
+            reset_index("event")
             return get_event_by_id(event_id)
 
     if isinstance(response, Response):
-        return make_response("No more services available")
+        # return make_response("No more services available")
+        return response
     else:
         if request.endpoint in cache.keys():
             cache[request.endpoint].append(response)
@@ -174,7 +184,7 @@ def get_event_by_id(event_id):
 @app.route('/event/<int:event_id>', methods=['PUT'])
 def update_event(event_id):
     data = request.get_json()
-    url = get_url()
+    url = get_url(listOfEventManagerUrl, "event")
     if isinstance(url, Response):
         return url
     event_manager = EventManagerClass()
@@ -192,7 +202,7 @@ def update_event(event_id):
         if breaker.state.name == "open":
             remove_route(url)
             print(f"Rerouting activat")
-            reset_index()
+            reset_index("event")
             return update_event(event_id)
 
     if isinstance(response, Response):
@@ -204,7 +214,7 @@ def update_event(event_id):
 
 @app.route('/event/<int:event_id>', methods=['DELETE'])
 def delete_event(event_id):
-    url = get_url()
+    url = get_url(listOfEventManagerUrl, "event")
     if isinstance(url, Response):
         return url
     event_manager = EventManagerClass()
@@ -222,7 +232,7 @@ def delete_event(event_id):
         if breaker.state.name == "open":
             remove_route(url)
             print(f"Rerouting activat")
-            reset_index()
+            reset_index("event")
             return delete_event(event_id)
 
     if isinstance(response, Response):
@@ -235,15 +245,36 @@ def delete_event(event_id):
 def create_task():
     data = request.get_json()
     list_event_id = []
-    url = get_url()
+    url = get_url(listOfTaskManagerUrl, "task")
     if isinstance(url, Response):
         return url
-    all_events = get_all_events_grpc(url)
-    for event in all_events.items:
-        event_id = event.id
+
+    all_events = json.loads(get_all_events())
+    #print(all_events)
+
+    for event in all_events.get("items", []):
+        event_id = event.get("id")
         list_event_id.append(event_id)
+    print(list_event_id)
     if data.get("eventId") in list_event_id:
-        response = create_task_grpc(data)
+        task_manager = TaskManagerClass()
+        breaker = task_manager.breaker
+        try:
+            create_task_function = task_manager.create_task
+            response = create_task_function(url, data)
+        except Exception as e:
+            while breaker.state.name == "closed":
+                try:
+                    response = create_task_function(url, data)
+                    return response
+                except Exception as e:
+                    print()
+            if breaker.state.name == "open":
+                remove_task_route(url)
+                print(f"Rerouting activat")
+                reset_index("task")
+                return create_task()
+
         if isinstance(response, Response):
             return response
         else:
@@ -254,10 +285,29 @@ def create_task():
 
 @app.route('/task/eventId/<int:event_id>', methods=['Get'])
 def get_tasks_by_event(event_id):
-    url = get_url()
+    url = get_url(listOfTaskManagerUrl, "task")
     if isinstance(url, Response):
         return url
-    response = get_tasks_by_event_grpc(event_id, url)
+
+    task_manager = TaskManagerClass()
+    breaker = task_manager.breaker
+    print(breaker.fail_max)
+    try:
+        get_tasks_by_event_function = task_manager.get_tasks_by_event
+        response = get_tasks_by_event_function(url, event_id)
+    except Exception as e:
+        while breaker.state.name == "closed":
+            try:
+                response = get_tasks_by_event_function(url, event_id)
+                return MessageToJson(response)
+            except Exception as e:
+                print()
+        if breaker.state.name == "open":
+            remove_task_route(url)
+            print(f"Rerouting activat")
+            reset_index("task")
+            return get_tasks_by_event(event_id)
+
     if isinstance(response, Response):
         return response
     else:
@@ -268,10 +318,28 @@ def get_tasks_by_event(event_id):
 
 @app.route('/task/<int:task_id>', methods=['GET'])
 def get_task_by_id(task_id):
-    url = get_url()
+    url = get_url(listOfTaskManagerUrl, "task")
     if isinstance(url, Response):
         return url
-    response = get_task_by_id_grpc(task_id, url)
+
+    task_manager = TaskManagerClass()
+    breaker = task_manager.breaker
+    print(breaker.fail_max)
+    try:
+        get_task_by_id_function = task_manager.get_task_by_id
+        response = get_task_by_id_function(url, task_id)
+    except Exception as e:
+        while breaker.state.name == "closed":
+            try:
+                response = get_task_by_id_function(url, task_id)
+                return MessageToJson(response)
+            except Exception as e:
+                print()
+        if breaker.state.name == "open":
+            remove_task_route(url)
+            print(f"Rerouting activat")
+            reset_index("task")
+            return get_task_by_id(task_id)
 
     if isinstance(response, Response):
         return response
@@ -287,10 +355,28 @@ def get_task_by_id(task_id):
 @app.route('/task/<int:task_id>', methods=['PUT'])
 def update_task(task_id):
     data = request.get_json()
-    url = get_url()
+    url = get_url(listOfTaskManagerUrl, "task")
     if isinstance(url, Response):
         return url
-    response = update_task_grpc(task_id, data, url)
+    task_manager = TaskManagerClass()
+    breaker = task_manager.breaker
+    print(breaker.fail_max)
+    try:
+        update_task_function = task_manager.update_task
+        response = update_task_function(url, task_id, data)
+    except Exception as e:
+        while breaker.state.name == "closed":
+            try:
+                response = update_task_function(url, task_id, data)
+                return MessageToJson(response)
+            except Exception as e:
+                print()
+        if breaker.state.name == "open":
+            remove_task_route(url)
+            print(f"Rerouting activat")
+            reset_index("task")
+            return update_task(task_id)
+
     if isinstance(response, Response):
         return response
     else:
@@ -299,10 +385,29 @@ def update_task(task_id):
 
 @app.route('/task/<int:task_id>', methods=['DELETE'])
 def delete_task(task_id):
-    url = get_url()
+    url = get_url(listOfTaskManagerUrl, "task")
     if isinstance(url, Response):
         return url
-    response = delete_task_grpc(task_id, url)
+
+    task_manager = TaskManagerClass()
+    breaker = task_manager.breaker
+    print(breaker.fail_max)
+    try:
+        delete_task_function = task_manager.delete_task
+        response = delete_task_function(url, task_id)
+    except Exception as e:
+        while breaker.state.name == "closed":
+            try:
+                response = delete_task_function(url, task_id, data)
+                return MessageToJson(response)
+            except Exception as e:
+                print()
+        if breaker.state.name == "open":
+            remove_task_route(url)
+            print(f"Rerouting activat")
+            reset_index("task")
+            return delete_task(task_id)
+
     if isinstance(response, Response):
         return response
     else:
@@ -314,10 +419,14 @@ def delete_task(task_id):
 class CommunicationServicer(communication_pb2_grpc.CommunicationServicer):
 
     def SendMessage(self, request, context):
-        print(f"Service url:{request.message}.")
         if request.sender == 'Event manager' and request.message not in listOfEventManagerUrl:
+            print(f"Service :{request.message} is registering ...")
             listOfEventManagerUrl.append(request.message)
-        print(listOfEventManagerUrl)
+            print(f"Event Managers : {listOfEventManagerUrl}")
+        elif request.sender == 'Task manager' and request.message not in listOfTaskManagerUrl:
+            print(f"Service :{request.message} is registering ...")
+            listOfTaskManagerUrl.append(request.message)
+            print(f"Task Managers : {listOfTaskManagerUrl}")
         hello_reply = communication_pb2.MessageResponse()
         hello_reply.message = f"Service {request.message} was successfully registered in gateway."
         return hello_reply
@@ -330,7 +439,7 @@ def grpc_server():
     server.add_insecure_port("[::]:5003")
     try:
         server.start()
-        print("grpc server started at port : 5000")
+        print("grpc server started at port : 5003")
         stop_event.wait()
 
     except Exception as e:
